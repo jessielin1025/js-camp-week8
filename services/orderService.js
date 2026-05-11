@@ -15,6 +15,17 @@ async function placeOrder(userInfo) {
   // 提示：先用 utils validateOrderUser() 驗證使用者資料，驗證失敗時回傳 { success: false, errors: [...] }
   // 驗證通過後，呼叫 createOrder() 建立訂單
   // 回傳格式：{ success: true, data: ... } / { success: false, errors: [...] }
+  const { isValid, errors } = validateOrderUser(userInfo);
+  if (!isValid) return {
+    success: false,
+    errors
+  }
+
+  const data = await createOrder(userInfo);
+  return {
+    success: true,
+    data
+  }
 }
 
 /**
@@ -24,6 +35,8 @@ async function placeOrder(userInfo) {
 async function getOrders() {
   // 請實作此函式
   // 提示：呼叫 fetchOrders() 取得訂單陣列並回傳
+  const orders = await fetchOrders();
+  return orders
 }
 
 /**
@@ -33,6 +46,8 @@ async function getOrders() {
 async function getUnpaidOrders() {
   // 請實作此函式
   // 提示：呼叫 fetchOrders() 後，篩選出 paid 為 false 的訂單
+  const orders = await fetchOrders();
+  return orders.filter(order => !order.paid)
 }
 
 /**
@@ -42,6 +57,8 @@ async function getUnpaidOrders() {
 async function getPaidOrders() {
   // 請實作此函式
   // 提示：呼叫 fetchOrders() 後，篩選出 paid 為 true 的訂單
+  const orders = await fetchOrders();
+  return orders.filter(order => order.paid)
 }
 
 /**
@@ -54,6 +71,18 @@ async function updatePaymentStatus(orderId, isPaid) {
   // 請實作此函式
   // 提示：呼叫 updateOrderStatus()
   // 回傳格式：{ success: true, data: ... } / { success: false, error: ... }
+  try {
+    const data = await updateOrderStatus(orderId, isPaid);
+    return {
+      success: true,
+      data
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    }
+  }
 }
 
 /**
@@ -65,6 +94,18 @@ async function removeOrder(orderId) {
   // 請實作此函式
   // 提示：呼叫 deleteOrder()
   // 回傳格式：{ success: true, data: ... } / { success: false, error: ... }
+  try {
+    const data = await deleteOrder(orderId);
+    return {
+      success: true,
+      data
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    }
+  }
 }
 
 /**
@@ -85,6 +126,18 @@ async function removeOrder(orderId) {
  */
 function formatOrder(order) {
   // 請實作此函式
+  const { id, user, createdAt, paid, total, products } = order;
+  return {
+    id,
+    user,
+    products,
+    total,
+    totalFormatted: formatCurrency(total),
+    paid,
+    paidText: paid ? '已付款' : '未付款',
+    createdAt: formatDate(createdAt),
+    daysAgo: getDaysAgo(createdAt)
+  }
 }
 
 /**
@@ -113,6 +166,32 @@ function displayOrders(orders) {
   // 商品明細：
   //   - 產品名稱 x 2（產品數量）
   // ========================================
+  if (orders.length === 0) {
+    console.log('沒有訂單');
+    return
+  }
+  console.log('訂單列表：');
+  console.log('========================================');
+  orders.forEach((order, index) => {
+    const { id, user, createdAt, paidText, totalFormatted, products, daysAgo } = formatOrder(order);
+    console.log(`訂單 ${index + 1}`);
+    console.log('----------------------------------------');
+    console.log(`訂單編號：${id}`);
+    console.log(`顧客姓名：${user.name}`);
+    console.log(`顧客姓名：${user.tel}`);
+    console.log(`顧客姓名：${user.address}`);
+    console.log(`顧客姓名：${user.payment}`);
+    console.log(`訂單金額：${totalFormatted}`);
+    console.log(`付款狀態：${paidText}`);
+    console.log(`建立時間：${createdAt} (${daysAgo})`);
+    console.log('----------------------------------------');
+    console.log('商品明細：');
+    products.forEach(product => {
+      console.log(`- ${product.title} x ${product.quantity}（產品數量）`);
+    })
+    console.log('========================================');
+
+  })
 }
 
 module.exports = {
